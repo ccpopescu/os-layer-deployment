@@ -1,0 +1,80 @@
+---
+
+- name: check swap status
+  shell: cat /proc/swaps
+  register: swap_info
+  changed_when: false
+
+- name: disable swapping
+  command: swapoff -a
+  when: not os_swap|bool and (swap_info.stdout is search('/dev/'))
+
+- name: disable swap on boot
+  lineinfile:
+    dest: /etc/fstab
+    regexp: '(.*swap.*)'
+    line: '#\1'
+    backrefs: yes
+    state: present
+  when: not os_swap|bool
+
+- name: cleanup possible double comment char in fstab file
+  replace:
+    dest: /etc/fstab
+    regexp: '^##'
+    replace: "#"
+  when: not os_swap|bool
+
+- name: enable swap
+  command: swapon -a
+  when: os_swap|bool and not (swap_info.stdout is search('/dev/'))
+
+## regex replace needs more work
+# - name: enable swap on boot
+#   lineinfile:
+#     dest: /etc/fstab
+#     regexp: (?i)^\s*#*\s*.*swap.*
+#     line: \1
+#     backrefs: yes
+#   when: os_swap
+
+
+
+
+# - name: check swap status
+#   shell: cat /proc/swaps | grep /dev
+#   register: swap_info
+#   changed_when: false
+#   ignore_errors: true
+
+# - name: disable swapping
+#   command: swapoff -a
+#   when: es_no_swap and (swap_info.stdout is search('/dev'))
+
+# - name: enable swapping
+#   command: swapon -a
+#   when: not es_no_swap and not (swap_info.stdout is search('/dev'))
+
+# - name: comment out swap line in fstab
+#   lineinfile:
+#     dest: /etc/fstab
+#     regexp: '(.*swap.*)'
+#     line: '#\1'
+#     backrefs: yes
+#     state: present
+#   when: es_no_swap
+
+# - name: cleanup possible double comment char in fstab file
+#   replace:
+#     dest: /etc/fstab
+#     regexp: '^##'
+#     replace: "#"
+# ### uncomment swapline in fstab - not working
+# # - name: Uncomment parameters
+# #   lineinfile:
+# #     dest: app.conf
+# #     regexp: (?i)^\s*#*\s*.*swap.*
+# #     line: \1
+# #     backrefs: yes
+# #   when: not es_no_swap
+

@@ -1,0 +1,27 @@
+---
+
+# Number of days to check for baseline update
+servers_baseline_update_days: 14
+# Set to true if baseline update is needed regardless of last update
+servers_baseline_force: false
+
+# proxy_host: 'proxy.domain.com'
+# proxy_port: '80'
+
+servers_centos_update: true
+servers_centos_update_exclude: ""
+servers_central_log: true
+
+servers_volumes:
+  - { device: "sdb", vg: "vg1", map: "vol1" }
+  - { device: "sdc", vg: "vg2", map: "vol2" }
+
+os_swap: true
+
+role_setup_path: "https://tfs.e-contact.cl/archivos/BancoEstado/tools"
+role_msi_files:
+  - { file: "Pscx-3.2.0.msi" }
+role_zip_files:
+  - { file: "winlogbeat-6.3.0-windows-x86_64.zip", folder: "Winlogbeat" }
+  - { file: "filebeat-6.3.0-windows-x86_64.zip", folder: "Filebeat" }
+  - { file: "metricbeat-6.3.0-windows-x86_64.zip", folder: "Metricbeat" }

@@ -1,0 +1,98 @@
+---
+
+- name: set timezone to 'Pacific SA Standard Time' (GMT-04:00)
+  win_timezone:
+    timezone: Pacific SA Standard Time
+
+- name: create windows setup dir
+  win_file:
+    path: "{{ item }}"
+    state: directory
+  with_items:
+    - '{{ servers_setup_dir_w }}\baseline'
+
+- name: check for msi files
+  win_stat:
+    path: '{{ servers_setup_dir_w }}\baseline\{{ item.file }}'
+  register: msi_files
+  loop: "{{ role_msi_files }}"
+
+- name: get msi files
+  win_get_url:
+    url: "{{ role_setup_path }}/{{ item.item.file }}"
+    dest: '{{ servers_setup_dir_w }}\baseline\'
+    url_username: "e-contact\\{{servers_repo_user}}"
+    url_password: "{{servers_repo_pwd}}"
+    force_basic_auth: yes
+    validate_certs: false
+  when: not item.stat.exists
+  loop: "{{ msi_files.results }}"
+
+- name: install msi files
+  win_package:
+    path: '{{ servers_setup_dir_w }}\baseline\{{ item.item.file }}'
+    state: present
+  loop: "{{ msi_files.results }}"
+
+- name: check for zip files
+  win_stat:
+    path: '{{ servers_setup_dir_w }}\baseline\{{ item.file }}'
+  register: zip_files
+  loop: "{{ role_zip_files }}"
+
+- name: get zip files
+  win_get_url:
+    url: "{{ role_setup_path }}/{{ item.item.file }}"
+    dest: '{{ servers_setup_dir_w }}\baseline\'
+    url_username: "e-contact\\{{servers_repo_user}}"
+    url_password: "{{servers_repo_pwd}}"
+    force_basic_auth: yes
+    validate_certs: false
+  when: not item.stat.exists
+  loop: "{{ zip_files.results }}"
+
+
+# - name: unzip installers
+#   win_unzip:
+#     src: '{{ servers_setup_dir_w }}\baseline\{{ item.file }}'
+#     dest: 'C:\Program Files\'
+#   args:
+#     creates: 'C:\Program Files\{{ item.folder }}\{{ item.folder }}.exe'
+#   loop: "{{ role_zip_files }}"
+
+# - name: rename beat folders
+#   raw: 'C:\\Windows\\System32\\cmd.exe /C rename "C:\\Program Files\\{{ item.source }}" {{ item.dest }}'
+#   loop: "{{ role_zip_files }}"
+
+#   with_items:
+#     - { dest: "Winlogbeat", source: "{{ servers_winlogbeat }}" }
+#     - { dest: "Metricbeat", source: "{{ servers_metricbeat }}" }
+#   when: beats.changed
+
+
+# - name: install beats services
+#   win_service:
+#     name: "{{ item }}"
+#     path: C:\PROGRA~1\{{ item}}\{{ item }}.exe -c C:\PROGRA~1\{{ item}}\{{ item }}.yml
+#     description: "Elastic Beats - {{ item }}"
+#     start_mode: manual
+#     state: stopped
+#   when: beats.changed
+#   with_items:
+#     - "Winlogbeat"
+#     - "Metricbeat"
+
+- name: update date in baseline file
+  win_lineinfile:
+    path: 'C:\Windows\Temp\baseline.json'
+    regexp: '^  "date": '
+    line: '  "date": "{{ ansible_date_time.date }} {{ ansible_date_time.time}}"'
+
+- name: read baseline json
+  slurp:
+    path: 'C:\Windows\Temp\baseline.json'
+  register: baseline_file
+
+- name: update baseline facts
+  set_fact:
+    server_baseline: "{{ (baseline_file.content|b64decode|from_json) }}"

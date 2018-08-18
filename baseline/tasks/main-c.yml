@@ -1,0 +1,23 @@
+---
+
+- name: check custom fact directory
+  file:
+    path: "/etc/ansible/facts.d"
+    state: "directory"
+  when: ansible_local is not defined
+
+- name: set baseline custom fact file
+  template:
+    src: baseline.fact
+    dest: /etc/ansible/facts.d/
+    mode: 0755
+  when: ansible_local.baseline is not defined
+  register: custom_facts
+
+- name: update custom facts
+  setup: ~
+  when: custom_facts.changed
+
+- name: apply CentOS baseline
+  include_tasks: "baseline-c.yml"
+  when: (servers_baseline_update_days <= ((ansible_date_time.date + " " + ansible_date_time.time)|to_datetime - ansible_local.baseline.date|to_datetime).days) or servers_baseline_force|bool

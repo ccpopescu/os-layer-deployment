@@ -1,0 +1,45 @@
+---
+
+# Basic rsyslog configuration
+- name: set rsyslog config files
+  template: 
+    src: "{{ item }}"
+    dest: /etc/rsyslog.d/
+    mode: 0644
+  loop:
+    - 100-input-files.conf
+    - 600-output.conf
+  notify: "restart logging"
+
+- name: configure system logs file rotation
+  template: 
+    src: syslog.conf
+    dest: /etc/logrotate.d/syslog
+    owner: root
+    group: root
+    mode: 0644
+
+# Configure firewall
+- include_tasks: "config-firewalld-c.yml"
+  when: "'docker' not in group_names"
+
+- include_tasks: "config-iptables-c.yml"
+  when: "'docker' in group_names"
+
+# Configure PAM
+- name: copy PAM common-session - CentOS 7
+  copy:
+    src: common-session
+    dest: /etc/pam.d/common-session
+  when: (ansible_distribution_major_version == '7')
+
+# Create folders
+- name: create app folders
+  file:
+    path: "{{ item }}"
+    state: directory
+  with_items:
+    - "{{ servers_setup_dir_x }}"
+    - "{{ servers_apps_dir_x }}"
+    - "{{ servers_data_dir_x }}"
+    - "{{ servers_logs_dir_x }}"

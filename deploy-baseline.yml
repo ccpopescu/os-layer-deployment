@@ -1,0 +1,6 @@
+#----Baseline config---------------------
+
+- name: baseline os
+  hosts: servers
+  roles:
+    - baseline

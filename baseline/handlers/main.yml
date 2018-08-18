@@ -1,0 +1,30 @@
+---
+
+- name: reboot host
+  include_tasks: do_reboot.yml
+  listen: "reboot"
+
+- name: systemd reload config
+  systemd: 
+    name: crond
+    daemon_reload: yes
+    state: restarted
+  listen: "reload systemctl"
+  
+- name: restart nw
+  service: 
+    name: network
+    state: restarted
+  listen: "restart nw"
+
+- name: restart sshd
+  service: 
+    name: sshd
+    state: restarted
+  listen: "restart ssh"
+
+- name: restart rsyslog
+  service: 
+    name: rsyslog
+    state: restarted
+  listen: "restart logging"

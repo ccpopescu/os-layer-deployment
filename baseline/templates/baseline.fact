@@ -1,0 +1,4 @@
+#jinja2: newline_sequence:'\n'
+#!/bin/bash
+echo "{\"date\": \"2000-01-01 00:00:00\"}"
+

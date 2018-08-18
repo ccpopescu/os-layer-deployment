@@ -1,0 +1,33 @@
+---
+
+- name: create baseline file if it does not exists
+  win_copy:
+    src: baseline.json
+    dest: 'C:\Windows\Temp\'
+    force: no
+  register: baseline_file
+
+- name: read baseline json
+  slurp:
+    path: 'C:\Windows\Temp\baseline.json'
+  register: baseline_file
+
+- name: set baseline updated facts
+  set_fact:
+    server_baseline_updated: false
+    server_baseline: "{{ (baseline_file.content|b64decode|from_json) }}"
+
+- name: apply Windows baseline
+  include_tasks: "baseline-w.yml"
+  when: (servers_baseline_update_days <= ((ansible_date_time.date + " " + ansible_date_time.time)|to_datetime - server_baseline.date|to_datetime).days) or servers_baseline_force|bool
+
+# - name: update date in baseline file
+#   lineinfile:
+#     path: ~/.ansible/baseline.json
+#     regexp: '^  "date": '
+#     line: '  "date": "{{ ansible_date_time.date }} {{ ansible_date_time.time}}"'
+#   when: server_baseline_updated
+
+# - name: update baseline facts
+#   set_fact:
+#     server_baseline: "{{ (baseline_file.content|b64decode|from_json) }}"

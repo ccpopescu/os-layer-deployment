@@ -1,0 +1,18 @@
+---
+
+- include_tasks: "updates-c.yml"
+
+- include_tasks: "build-vols-c.yml"
+
+- include_tasks: "config-os-c.yml"
+
+- include_tasks: "set-swap-c.yml"
+
+- name: update baseline date in facts file
+  lineinfile:
+    path: /etc/ansible/facts.d/baseline.fact
+    regexp: '^echo "{\\"date\\"'
+    line:    'echo "{\"date\": \"{{ ansible_date_time.date }} {{ ansible_date_time.time}}\"}"'
+
+- name: update custom facts
+  setup: ~

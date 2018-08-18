@@ -1,0 +1,54 @@
+---
+
+- name: check for volumes
+  stat: "path=/dev/{{ item.device }}"
+  loop: "{{ servers_volumes }}"
+  register: volumes
+
+- name: creating new volume groups
+  lvg: 
+    vg: "{{ item.item.vg }}"
+    pvs: "/dev/{{ item.item.device }}"
+    state: present
+  when: item.stat.exists
+  loop: "{{ volumes.results }}"
+
+- name: creating new logical volumes
+  lvol: 
+    vg: "{{ item.item.vg }}"
+    lv: "{{ item.item.map }}"
+    size: 100%VG
+  when: item.stat.exists
+  loop: "{{ volumes.results }}"
+
+- name: creating new filesystem on logical volumes - CentOS 6
+  filesystem: 
+    fstype: ext4
+    dev: "/dev/{{ item.item.vg }}/{{ item.item.map }}"
+  when: item.stat.exists and (ansible_distribution_major_version == '6')
+  loop: "{{ volumes.results }}"
+
+- name: mounting new filesystem on volumes - CentOS 6
+  mount: 
+    name: "/mnt/{{ item.item.map }}"
+    src: "/dev/{{ item.item.vg }}/{{ item.item.map }}"
+    fstype: ext4
+    state: mounted
+  when: item.stat.exists and (ansible_distribution_major_version == '6')
+  loop: "{{ volumes.results }}"
+
+- name: creating new filesystem on logical volumes - CentOS 7
+  filesystem: 
+    fstype: xfs
+    dev: "/dev/{{ item.item.vg }}/{{ item.item.map }}"
+  when: item.stat.exists and (ansible_distribution_major_version == '7')
+  loop: "{{ volumes.results }}"
+
+- name: mounting new filesystem on volumes - CentOS 7
+  mount: 
+    name: "/mnt/{{ item.item.map }}"
+    src: "/dev/{{ item.item.vg }}/{{ item.item.map }}"
+    fstype: xfs
+    state: mounted
+  when: item.stat.exists and (ansible_distribution_major_version == '7')
+  loop: "{{ volumes.results }}"

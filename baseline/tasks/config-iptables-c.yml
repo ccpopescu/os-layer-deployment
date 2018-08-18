@@ -1,0 +1,27 @@
+---
+
+- name: disable firewalld
+  service: 
+    name: firewalld
+    enabled: no
+    state: stopped
+
+- name: install iptables
+  yum: 
+    name: "iptables-services"
+    state: latest
+    update_cache: yes
+
+- name: enable iptables
+  service: 
+    name: iptables
+    enabled: yes
+    state: started
+  when: servers_fw_enabled
+
+- name: disable iptables
+  service: 
+    name: iptables
+    enabled: no
+    state: stopped
+  when: not servers_fw_enabled

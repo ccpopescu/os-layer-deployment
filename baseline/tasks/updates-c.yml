@@ -1,0 +1,87 @@
+---
+
+- name: enable improved ssh login performance
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    insertbefore: "{{ item.before }}"
+    backrefs: yes
+  loop:
+    - { regexp: "^#UseDNS", line: "UseDNS no", before: "^#PidFile" }
+    - { regexp: "^GSSAPIAuthentication", line: "GSSAPIAuthentication no", before: "^GSSAPICleanupCredentials" }
+  register: ssh_perf
+
+- name: enable improved ansible performance
+  lineinfile:
+    path: /etc/sudoers
+    insertafter: '^root.*'
+    line: 'Defaults:root   !requiretty'
+  register: ansible_perf
+
+- name: restart sshd
+  service: 
+    name: sshd
+    enabled: yes
+    state: restarted
+  when: ssh_perf.changed or ansible_perf.changed
+
+- name: disable IPv6
+  sysctl: name={{ item }} value=1 state=present
+  with_items:
+    - net.ipv6.conf.all.disable_ipv6
+    - net.ipv6.conf.default.disable_ipv6
+    - net.ipv6.conf.lo.disable_ipv6
+  notify: restart nw
+
+- name: set hostname
+  hostname:
+    name: "{{ host_name }}"
+  when: ( ansible_hostname != host_name )
+  notify: reboot
+
+- name: set hosts file
+  lineinfile:
+    path: /etc/hosts
+    line: "{{ item }}"
+  loop:
+    - "{{ ansible_default_ipv4.address }}   {{ ansible_hostname }}"
+
+- name: set timezone CentOS 7
+  shell: timedatectl set-timezone America/Santiago
+  changed_when: false
+
+- name: set proxy settings for yum
+  lineinfile:
+    path: /etc/yum.conf
+    line: 'proxy=http://{{ proxy_host }}:{{ proxy_port}}'
+  when: proxy_host is defined
+
+- name: install CentOS 7 base packages
+  yum: 
+    name: "{{ item.package }}"
+    state: latest
+    disable_gpg_check: "{{ item.no_gpg }}"
+    update_cache: yes
+  with_items:
+    - { package: "yum-utils, deltarpm, nano, ntp, lvm2, unzip, wget, libselinux-python", no_gpg: "no" }
+
+- name: add EPEL repo
+  yum:
+    name: epel-release
+    state: latest
+
+- name: remove old kernels
+  command: package-cleanup --oldkernels --count=1 -y
+  when: servers_centos_update|bool
+  register: oldkernels
+  changed_when: false
+
+- name: update OS
+  yum:
+    name: '*'
+    state: latest
+    exclude: "{{ servers_centos_update_exclude }}"
+    update_cache: yes
+  when: servers_centos_update|bool
+
