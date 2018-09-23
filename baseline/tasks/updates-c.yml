@@ -64,7 +64,7 @@
     disable_gpg_check: "{{ item.no_gpg }}"
     update_cache: yes
   with_items:
-    - { package: "yum-utils, deltarpm, nano, ntp, lvm2, unzip, wget, libselinux-python", no_gpg: "no" }
+    - { package: "yum-utils, deltarpm, nano, ntp, lvm2, unzip, wget, libselinux-python, net-tools", no_gpg: "no" }
 
 - name: add EPEL repo
   yum:
