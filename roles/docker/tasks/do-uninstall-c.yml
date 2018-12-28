@@ -1,0 +1,10 @@
+---
+
+- name: uninstall docker
+  yum:
+    name: "docker*"
+    state: removed
+  become: true
+
+- name: get version cmd
+  include_tasks: "get-version-cmd-c.yml"

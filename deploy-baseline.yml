@@ -4,3 +4,10 @@
   hosts: servers
   roles:
     - baseline
+
+#----Docker config---------------------
+
+- name: docker
+  hosts: docker
+  roles:
+    - docker

@@ -1,0 +1,77 @@
+---
+
+- name: install docker prereq
+  yum: 
+    name: "{{ item.package }}"
+    state: latest
+    disable_gpg_check: "{{ item.no_gpg }}"
+    update_cache: yes
+  become: true
+  with_items:
+    - { package: "yum-plugin-ovl, yum-utils, lvm2, device-mapper-persistent-data, git", no_gpg: "no" }
+
+# Configure python
+- name: download get-pip.py
+  get_url:
+    url: https://bootstrap.pypa.io/get-pip.py
+    dest: ~/get-pip.py
+    mode: 0755
+  register: getpip
+
+- name: install pip
+  command: python get-pip.py
+  become: true
+  args:
+    creates: /usr/lib/python2.7/site-packages/pip
+
+- name: install py libs - docker-py
+  command: "pip install {{ item.name }}"
+  become: true
+  args:
+    creates: "{{ item.creates }}"
+  with_items:
+    - { name: "docker-py", creates: "/usr/lib/python2.7/site-packages/docker_py*" } 
+
+# Install Docker Community Edition 
+- name: download docker-ce repo
+  get_url:
+    url: https://download.docker.com/linux/centos/docker-ce.repo
+    dest: /etc/yum.repos.d/
+
+- name: add docker-ce gpg key
+  rpm_key:
+    state: present
+    key: https://download.docker.com/linux/centos/gpg
+
+- name: install docker-ce
+  yum: 
+    name: "{{ item.package }}"
+    state: latest
+    disable_gpg_check: "{{ item.no_gpg }}"
+    update_cache: yes
+  with_items:
+    - { package: "docker-ce", no_gpg: "no" }
+
+# Start docker
+- name: enable and start docker
+  service: 
+    name: docker
+    enabled: yes
+    state: started
+  become: true
+
+- name: test docker
+  docker_container:
+    name: hello-world
+    image: hello-world
+  become: true
+  register: hello_world
+  changed_when: false
+
+# - debug:
+#   var: hello_world
+
+# Check install and version
+- name: get version cmd
+  include_tasks: "get-version-cmd-c.yml"
+

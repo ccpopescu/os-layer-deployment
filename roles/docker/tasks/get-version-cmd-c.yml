@@ -1,0 +1,11 @@
+---
+
+- name: check version cmd
+  shell: "{{role_cmd_get_version}}"
+  register: version
+  become: true
+  changed_when: false
+  ignore_errors: yes
+
+# - debug:
+#     var: version

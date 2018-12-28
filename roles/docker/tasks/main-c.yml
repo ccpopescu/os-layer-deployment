@@ -1,0 +1,16 @@
+---
+
+- name: get version cmd
+  include_tasks: "get-version-cmd-c.yml"
+
+- name: uninstall - different version detected
+  include_tasks: "do-uninstall-c.yml"
+  when: not version.failed and (role_str_version not in version.stdout)
+
+- name: install required version
+  include_tasks: "do-install-c.yml"
+  when: version.failed and (role_str_version != "-1")
+
+- name: configure
+  include_tasks: "do-config-c.yml"
+  when: not version.failed and (role_str_version in version.stdout)

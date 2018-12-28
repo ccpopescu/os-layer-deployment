@@ -1,0 +1,5 @@
+---
+
+- name: CentOS
+  include_tasks: "main-c.yml"
+  when: ansible_distribution is search("CentOS")

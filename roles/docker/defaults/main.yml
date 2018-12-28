@@ -1,0 +1,13 @@
+---
+
+## To uninstall set:
+# role_str_version: "-1"
+role_str_version: "18.09.0"
+role_cmd_get_version: "docker --version"
+role_str_installed: 'Docker version "{{role_str_version}}-ce'
+
+role_rpm_path: "https://tfs.e-contact.cl/archivos/{{servers_cli}}/tools"
+role_rpm:
+  - { file: "docker-ce-18.09.0.ce-1.el7.centos.x86_64.rpm", package: "docker-ce" }
+# role_files:
+#   - { file: "lmgr11.13-i686-linux-rhe4.tar" }
