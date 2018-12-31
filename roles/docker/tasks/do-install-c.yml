@@ -50,7 +50,7 @@
     disable_gpg_check: "{{ item.no_gpg }}"
     update_cache: yes
   with_items:
-    - { package: "docker-ce", no_gpg: "no" }
+    - { package: "docker-ce-{{role_str_version}}*", no_gpg: "no" }
 
 # Start docker
 - name: enable and start docker
