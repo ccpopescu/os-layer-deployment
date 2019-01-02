@@ -77,6 +77,14 @@
     state: started
   become: true
 
+# Enable high res timestamp
+- name: enable high resolution timestamp for rsyslog
+  lineinfile:
+    path: /etc/rsyslog.conf
+    regexp: '^$ActionFileDefaultTemplate RSYSLOG_TraditionalFileFormat'
+    line:    '#$ActionFileDefaultTemplate RSYSLOG_TraditionalFileFormat'
+  changed_when: false
+
 - name: update OS
   yum:
     name: '*'
